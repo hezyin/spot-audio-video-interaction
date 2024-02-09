@@ -2,6 +2,7 @@ import base64
 import requests
 import cv2
 import os
+from gtts import gTTS
 
 # Play an audio sample using ffplay, with no display and auto exit on completion. This is useful for background audio feedback.
 audio_filename = "file_example_MP3_2MG.mp3"
@@ -86,3 +87,23 @@ response = requests.post("https://api.openai.com/v1/chat/completions", headers=h
 
 # Print the API response to the console. This response contains the AI's interpretation of the image content.
 print(response.json())
+
+# Check if the request was successful
+if response.status_code == 200:
+    response_data = response.json()
+    try:
+        text_to_read = response_data["choices"][0]["message"]["content"]
+        print(text_to_read)  # Print the text to console for verification
+        
+        # Convert the extracted text to speech
+        tts = gTTS(text=text_to_read, lang='en', slow=False)
+        tts_file = "response_tts.mp3"
+        tts.save(tts_file)
+        
+        # Play the generated speech file
+        os.system(f"ffplay -nodisp -autoexit -loglevel quiet {tts_file}")
+    except KeyError:
+        print("The expected data was not found in the response.")
+else:
+    print("Failed to get a valid response from OpenAI API.")
+
